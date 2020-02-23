@@ -9,7 +9,7 @@
 </head>
 <body>
 <div id="title">Gallery</div>
-<div id="album-view" class="">
+<div id="album-view">
     <div id="thumbs">
         {% for (f1, f2) in folder %}
         <a href="/{{ f2 }}">
@@ -17,6 +17,7 @@
                     src="/thumb/{{ f1 }}"
                     height="150"
                     width="150"
+                    loading="lazy"
             />
         </a>
         {% endfor %}

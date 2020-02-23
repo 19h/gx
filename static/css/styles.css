@@ -48,8 +48,13 @@ a:hover {
     border-top: 1px solid #ffad27 !important;
 }
 
-#subalbums {
+div#subalbums {
+    display: flex;
     padding-top: 1.5em;
+}
+
+div#subalbums > a {
+    margin: 0 10px;
 }
 
 .album-button {

@@ -14,8 +14,10 @@ use exif;
 use askama::Template;
 
 mod fsutil;
-use fsutil::discover_media_folders;
-use crate::fsutil::exif_enrich_media_items;
+use fsutil::{discover_media_folders, exif_enrich_media_items};
+
+mod imgutil;
+
 use image::{DynamicImage, GenericImageView};
 use actix_files::NamedFile;
 
@@ -37,8 +39,8 @@ struct FolderTemplate<'a> {
 }
 
 pub struct GxData {
-    data_path: String,
-    cache_path: String,
+    pub data_path: String,
+    pub cache_path: String,
 
     media_folders: MediaFolders,
     media_items: MediaItems,
@@ -115,75 +117,6 @@ impl GxData {
                     .collect::<Vec<_>>()
             )
     }
-
-    fn resize_if_needed(
-        &self,
-        image_path: String,
-        thubm_width: u32,
-        thubm_height: u32,
-    ) -> Option<String> {
-        let cleaned_name =
-            image_path
-                .clone()
-                .replace("/", "_")
-                .replace(".", "-");
-
-        if self.media_items.get(&image_path).is_none() {
-            return None;
-        }
-
-        let cache_path = format!(
-            "{}/{}_w{}_h{}.jpg",
-            self.cache_path,
-            cleaned_name,
-            thubm_width,
-            thubm_height,
-        );
-
-        if fs::metadata(&cache_path).is_ok() {
-            return Some(cache_path.clone());
-        }
-
-        fs::create_dir_all(
-            &self.cache_path,
-        );
-
-        image::open(image_path)
-            .map(|mut image| {
-                let width = image.width();
-                let height = image.height();
-
-                let min_dim = cmp::min(width, height);
-                let max_dim = cmp::max(width, height);
-
-                image
-                    .crop(
-                        (max_dim - min_dim) / 2,
-                        0,
-                        min_dim,
-                        min_dim,
-                    )
-                    .thumbnail(
-                        thubm_width,
-                        thubm_height,
-                    )
-            })
-            .map(|image| {
-                fs::File
-                ::create(&cache_path)
-                    .map(|mut output|
-                        Some(
-                            image.write_to(
-                                &mut output,
-                                image::ImageFormat::Jpeg,
-                            ),
-                        )
-                    )
-                    .unwrap_or(None)
-            })
-            .map(|_| Some(cache_path.clone()))
-            .unwrap_or(None)
-    }
 }
 
 async fn index(
@@ -206,26 +139,48 @@ async fn thumb(
     db: web::Data<Arc<Mutex<GxData>>>,
     req: HttpRequest,
 ) -> actix_web::Result<NamedFile> {
-    let db = &mut *db.lock().unwrap();
-
     let image =
         req.match_info()
             .query("filename");
 
+    let cache_path = {
+        let db = &mut *db.lock().unwrap();
+
+        if db.media_items.get(&image.to_string()).is_none() {
+            return Err(
+                io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "",
+                ).into(),
+            );
+        }
+
+        db.cache_path.clone()
+    };
+
     let thumb =
-        db.resize_if_needed(
+        imgutil::resize_if_needed(
+            cache_path,
             image.into(),
             200,
             200,
         );
 
     if thumb.is_none() {
-        return Err(io::Error::new(io::ErrorKind::NotFound, "").into());
+        return Err(
+            io::Error::new(
+                io::ErrorKind::NotFound,
+                "",
+            ).into(),
+        );
     }
 
-    let path: PathBuf = thumb.unwrap().parse().unwrap();
-
-    Ok(NamedFile::open(path)?)
+    Ok(NamedFile::open(
+        thumb
+            .unwrap()
+            .parse::<PathBuf>()
+            .unwrap(),
+    )?)
 }
 
 async fn listing(
@@ -295,7 +250,7 @@ async fn main() -> std::io::Result<()> {
                     .to(index)
             )
     })
-        .workers(4)
+        .workers(16)
         .bind("127.0.0.1:8080")?
         .run()
         .await
