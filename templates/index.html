@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="medium" content="image"/>
+    <title>Gallery</title>
+    <link href="/static/css/styles.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<div id="title">Gallery</div>
+<div id="album-view" class="">
+    <div id="subalbums" style="display: block;">
+        {% for (f1, f2) in folders %}
+        <a href="/f/{{ f1 }}">
+            <div
+                    class="album-button"
+                    style="background-image: url('/thumb/{{ f2 }}');background-size: contain;"
+            >
+                {{ f1 }}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+</body>
+</html>

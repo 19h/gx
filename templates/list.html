@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="medium" content="image"/>
+    <title>Gallery</title>
+    <link href="/static/css/styles.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<div id="title">Gallery</div>
+<div id="album-view" class="">
+    <div id="thumbs">
+        {% for (f1, f2) in folder %}
+        <a href="/{{ f2 }}">
+            <img
+                    src="/thumb/{{ f1 }}"
+                    height="150"
+                    width="150"
+            />
+        </a>
+        {% endfor %}
+    </div>
+
+</body>
+</html>
