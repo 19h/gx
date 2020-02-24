@@ -20,6 +20,7 @@ mod imgutil;
 
 use image::{DynamicImage, GenericImageView};
 use actix_files::NamedFile;
+use crate::fsutil::reorder_media_folders;
 
 type MediaFolders = Vec<(String, NaiveDate)>;
 type MediaItem = (fs::Metadata, Option<Vec<exif::Field>>);
@@ -76,6 +77,12 @@ impl GxData {
 
         exif_enrich_media_items(
             &mut self.media_items,
+        );
+
+        reorder_media_folders(
+            &mut self.media_folders,
+            &mut self.media_items,
+            &mut self.media_map,
         );
     }
 
