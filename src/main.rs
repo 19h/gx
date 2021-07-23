@@ -21,6 +21,7 @@ mod imgutil;
 use image::{DynamicImage, GenericImageView};
 use actix_files::NamedFile;
 use crate::fsutil::reorder_media_folders;
+use actix_web::web::Data;
 
 type MediaFolders = Vec<(String, NaiveDate)>;
 type MediaItem = (fs::Metadata, Option<Vec<exif::Field>>);
@@ -201,14 +202,17 @@ async fn listing(
             .query("filename");
 
     match db.build_folder_data(folder_name) {
-        Some(data) =>
+        Some(data) => {
+
+
             HttpResponse::Ok()
                 .content_type("text/html")
                 .body(
                     (FolderTemplate {
                         folder: &data,
                     }).render().unwrap(),
-                ),
+                )
+        }
         _ => HttpResponse::NotFound().await.unwrap(),
     }
 }

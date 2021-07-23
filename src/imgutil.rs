@@ -4,8 +4,8 @@ use image::GenericImageView;
 pub fn resize_if_needed(
     cache_path: String,
     image_path: String,
-    thubm_width: u32,
-    thubm_height: u32,
+    thumb_width: u32,
+    thumb_height: u32,
 ) -> Option<String> {
     let cleaned_name =
         image_path
@@ -17,8 +17,8 @@ pub fn resize_if_needed(
         "{}/{}_w{}_h{}.jpg",
         &cache_path,
         cleaned_name,
-        thubm_width,
-        thubm_height,
+        thumb_width,
+        thumb_height,
     );
 
     if fs::metadata(&cache_file_path).is_ok() {
@@ -37,6 +37,8 @@ pub fn resize_if_needed(
             let min_dim = cmp::min(width, height);
             let max_dim = cmp::max(width, height);
 
+            dbg!(width, height, min_dim, max_dim);
+
             image
                 .crop(
                     (max_dim - min_dim) / 2,
@@ -45,8 +47,8 @@ pub fn resize_if_needed(
                     min_dim,
                 )
                 .thumbnail(
-                    thubm_width,
-                    thubm_height,
+                    thumb_width,
+                    thumb_height,
                 )
         })
         .map(|image| {
